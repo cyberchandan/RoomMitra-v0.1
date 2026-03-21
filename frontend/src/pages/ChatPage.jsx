@@ -17,9 +17,11 @@ const ChatPage = () => {
   useEffect(() => {
     if (user) {
       // const newSocket = io('http://localhost:5000');
-      const newSocket = io('https://roomserver.vercel.app/');
-      setSocket(newSocket);
-
+      // const newSocket = io('https://roomserver.vercel.app/');
+      // setSocket(newSocket);
+      const newSocket = io('https://imaginative-recreation-production-d054.up.railway.app', {
+        transports: ['websocket']
+      });
       // Join chat room based on my own user ID
       newSocket.emit('join_chat', user._id);
 
