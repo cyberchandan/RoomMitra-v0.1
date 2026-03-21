@@ -14,21 +14,37 @@ const ChatPage = () => {
   const messagesEndRef = useRef(null);
 
   // Initialize Socket Connection
+  // useEffect(() => {
+  //   if (user) {
+  //     // const newSocket = io('http://localhost:5000');
+  //     // const newSocket = io('https://roomserver.vercel.app/');
+  //     // setSocket(newSocket);
+  //     const newSocket = io('https://imaginative-recreation-production-d054.up.railway.app', {
+  //       transports: ['websocket']
+  //     });
+      
+  //     setSocket(newSocket); // 🔥 YE LINE ADD KAR
+      
+  //     // Join chat room
+  //     newSocket.emit('join_chat', user._id);
+
+  //     // Cleanup
+  //     return () => newSocket.disconnect();
+  //   }
+  // }, [user]);
   useEffect(() => {
     if (user) {
-      // const newSocket = io('http://localhost:5000');
-      // const newSocket = io('https://roomserver.vercel.app/');
-      // setSocket(newSocket);
       const newSocket = io('https://imaginative-recreation-production-d054.up.railway.app', {
         transports: ['websocket']
       });
-      
-      setSocket(newSocket); // 🔥 YE LINE ADD KAR
-      
-      // Join chat room
-      newSocket.emit('join_chat', user._id);
-
-      // Cleanup
+  
+      setSocket(newSocket);
+  
+      newSocket.on("connect", () => {
+        console.log("Connected:", newSocket.id);
+        newSocket.emit("join_chat", user._id);
+      });
+  
       return () => newSocket.disconnect();
     }
   }, [user]);
