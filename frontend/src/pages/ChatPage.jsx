@@ -16,7 +16,8 @@ const ChatPage = () => {
   // Initialize Socket Connection
   useEffect(() => {
     if (user) {
-      const newSocket = io('http://localhost:5000');
+      // const newSocket = io('http://localhost:5000');
+      const newSocket = io('https://roomserver.vercel.app/');
       setSocket(newSocket);
 
       // Join chat room based on my own user ID
