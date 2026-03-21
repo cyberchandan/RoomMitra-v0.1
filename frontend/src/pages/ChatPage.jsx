@@ -22,7 +22,10 @@ const ChatPage = () => {
       const newSocket = io('https://imaginative-recreation-production-d054.up.railway.app', {
         transports: ['websocket']
       });
-      // Join chat room based on my own user ID
+      
+      setSocket(newSocket); // 🔥 YE LINE ADD KAR
+      
+      // Join chat room
       newSocket.emit('join_chat', user._id);
 
       // Cleanup
