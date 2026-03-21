@@ -28,6 +28,12 @@ const io = new Server(server, {
   }
 });
 
+/////
+app.get("/", (req, res) => {
+  res.send("API is running 🚀");
+});
+/////
+
 // Pass io object to request
 app.use((req, res, next) => {
   req.io = io;
