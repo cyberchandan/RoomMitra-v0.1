@@ -2,7 +2,8 @@ import axios from 'axios';
 
 const api = axios.create({
   // baseURL: 'http://localhost:5000/api', // Backend base URL
-  baseURL: 'https://roomserver.vercel.app/api', // Backend base URL
+  // baseURL: 'https://roomserver.vercel.app/api', // Backend base URL
+  baseURL: 'https://imaginative-recreation-production-d054.up.railway.app/', // Backend base URL
 
 });
 
