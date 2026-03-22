@@ -64,6 +64,13 @@ const ChatPage = () => {
         // Only append if the message is from the user we are currently chatting with
         if (message.sender === otherUserId || message.receiver === otherUserId) {
           setMessages((prev) => [...prev, message]);
+          // 🔥 REAL-TIME SEEN TRIGGER
+    if (message.sender === otherUserId) {
+      socket.emit("mark_seen", {
+        sender: otherUserId,
+        receiver: user._id
+      });
+    }
         }
       };
 
