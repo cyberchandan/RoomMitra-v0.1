@@ -31,7 +31,7 @@ const InboxPage = () => {
   useEffect(() => {
     if (!user) return;
 
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io('https://imaginative-recreation-production-d054.up.railway.app/api');
     newSocket.emit('join_chat', user._id);
 
     const receiveMessageHandler = () => {
