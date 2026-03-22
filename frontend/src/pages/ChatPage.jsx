@@ -24,6 +24,22 @@ const ChatPage = () => {
   // is typing state
   const [isTyping, setIsTyping] = useState(false);
 
+  // user active status --offline/online
+  const [isOnline, setIsOnline] = useState(false);
+  const [lastSeenTime, setLastSeenTime] = useState(null);
+  // function for active status control
+  const formatLastSeen = (time) => {
+    if (!time) return "";
+
+    const diff = Math.floor((new Date() - new Date(time)) / 60000);
+
+    if (diff < 1) return "Last seen just now";
+    if (diff < 60) return `Last seen ${diff} min ago`;
+
+    const hours = Math.floor(diff / 60);
+    return `Last seen ${hours} hr ago`;
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -65,12 +81,12 @@ const ChatPage = () => {
         if (message.sender === otherUserId || message.receiver === otherUserId) {
           setMessages((prev) => [...prev, message]);
           // 🔥 REAL-TIME SEEN TRIGGER
-    if (message.sender === otherUserId) {
-      socket.emit("mark_seen", {
-        sender: otherUserId,
-        receiver: user._id
-      });
-    }
+          if (message.sender === otherUserId) {
+            socket.emit("mark_seen", {
+              sender: otherUserId,
+              receiver: user._id
+            });
+          }
         }
       };
 
@@ -114,6 +130,25 @@ const ChatPage = () => {
       };
     }
   }, [socket, otherUserId, user]);
+
+  // new useeffect for active status ---
+  useEffect(() => {
+    if (socket) {
+      socket.on("user_status", ({ userId, status, lastSeen }) => {
+        if (userId === otherUserId) {
+          if (status === "online") {
+            setIsOnline(true);
+            setLastSeenTime(null);
+          } else {
+            setIsOnline(false);
+            setLastSeenTime(lastSeen);
+          }
+        }
+      });
+
+      return () => socket.off("user_status");
+    }
+  }, [socket, otherUserId]);
 
   // Fetch Chat History
   useEffect(() => {
@@ -184,16 +219,23 @@ const ChatPage = () => {
             <UserIcon className="w-5 h-5" />
           </div>
           <div>
-          <h2 className="font-bold text-slate-800">
-  Chat with {userName || otherUser?.name || "😎"} 😇
-</h2>
+            <h2 className="font-bold text-slate-800">
+              Chat with {userName || otherUser?.name || "😎"} 😇
+            </h2>
 
-{isTyping && (
-  <p className="text-xs text-green-500 ml-1">Typing...</p>
-)}
-            <span className="text-xs text-primary-600 font-medium flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-primary-500 inline-block animate-pulse"></span>
-              Online
+            {isTyping && (
+              <p className="text-xs text-green-500 ml-1">Typing...</p>
+            )}
+            <span className="text-xs font-medium flex items-center gap-1">
+              <span
+                className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500" : "bg-gray-400"
+                  }`}
+              ></span>
+
+              {isOnline
+                ? "Online"
+                : formatLastSeen(lastSeenTime)
+              }
             </span>
           </div>
         </div>
@@ -244,18 +286,18 @@ const ChatPage = () => {
           value={newMessage}
           onChange={(e) => {
             setNewMessage(e.target.value);
-          
+
             // typing emit
             socket?.emit("typing", {
               sender: user._id,
               receiver: otherUserId
             });
-          
+
             // clear previous timeout
             if (window.typingTimeout) {
               clearTimeout(window.typingTimeout);
             }
-          
+
             // set new timeout
             window.typingTimeout = setTimeout(() => {
               socket?.emit("stop_typing", {
