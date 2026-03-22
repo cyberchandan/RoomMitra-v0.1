@@ -237,13 +237,20 @@ const ChatPage = () => {
           value={newMessage}
           onChange={(e) => {
             setNewMessage(e.target.value);
-
+          
+            // typing emit
             socket?.emit("typing", {
               sender: user._id,
               receiver: otherUserId
             });
-
-            setTimeout(() => {
+          
+            // clear previous timeout
+            if (window.typingTimeout) {
+              clearTimeout(window.typingTimeout);
+            }
+          
+            // set new timeout
+            window.typingTimeout = setTimeout(() => {
               socket?.emit("stop_typing", {
                 sender: user._id,
                 receiver: otherUserId
