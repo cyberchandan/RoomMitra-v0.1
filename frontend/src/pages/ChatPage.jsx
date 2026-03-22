@@ -133,7 +133,7 @@ const ChatPage = () => {
           </div>
           <div>
              <h2 className="font-bold text-slate-800">
-             Chat with {userName || otherUser?.name || "User"}
+             Chat with {userName || otherUser?.name || "😎"}
 </h2>
              <span className="text-xs text-primary-600 font-medium flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-primary-500 inline-block animate-pulse"></span>
