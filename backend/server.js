@@ -51,18 +51,70 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/chat', chatRoutes);
 
 // Socket.io logic
+// io.on('connection', (socket) => {
+//   console.log('A user connected: ', socket.id);
+  
+//   socket.on('join_chat', (userId) => {
+//     socket.join(userId); // Users join a room with their own ID
+//     console.log(`User ${userId} joined their personal room`);
+//   });
+
+//   socket.on('send_message', (data) => {
+//     // data should have { receiver, sender, content }
+//     io.to(data.receiver).emit('receive_message', data);
+//   });
+
+//   socket.on('disconnect', () => {
+//     console.log('User disconnected: ', socket.id);
+//   });
+// });
+
 io.on('connection', (socket) => {
   console.log('A user connected: ', socket.id);
   
+  // ✅ Join personal room
   socket.on('join_chat', (userId) => {
-    socket.join(userId); // Users join a room with their own ID
+    socket.join(userId);
     console.log(`User ${userId} joined their personal room`);
   });
 
+  // ✅ Send message (already working)
   socket.on('send_message', (data) => {
-    // data should have { receiver, sender, content }
     io.to(data.receiver).emit('receive_message', data);
   });
+
+  // ===========================
+  // 🔥 NEW: TYPING FEATURE
+  // ===========================
+
+  socket.on("typing", ({ sender, receiver }) => {
+    socket.to(receiver).emit("typing", { sender });
+  });
+
+  socket.on("stop_typing", ({ sender, receiver }) => {
+    socket.to(receiver).emit("stop_typing", { sender });
+  });
+
+  // ===========================
+  // 🔥 NEW: SEEN FEATURE
+  // ===========================
+
+  socket.on("mark_seen", async ({ sender, receiver }) => {
+    try {
+      const Message = require('./models/Message');
+  
+      await Message.updateMany(
+        { sender, receiver, readStatus: false },
+        { readStatus: true }
+      );
+  
+      io.to(sender).emit("messages_seen", { receiver });
+  
+    } catch (err) {
+      console.error("Error updating read status:", err);
+    }
+  });
+  // ===========================
 
   socket.on('disconnect', () => {
     console.log('User disconnected: ', socket.id);

@@ -21,6 +21,8 @@ const ChatPage = () => {
 
   // ✅ username displaying 
   const [otherUser, setOtherUser] = useState(null);
+  // is typing state
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -43,14 +45,14 @@ const ChatPage = () => {
       const newSocket = io('https://imaginative-recreation-production-d054.up.railway.app', {
         transports: ['websocket']
       });
-  
+
       setSocket(newSocket);
-  
+
       newSocket.on("connect", () => {
         console.log("Connected:", newSocket.id);
         newSocket.emit("join_chat", user._id);
       });
-  
+
       return () => newSocket.disconnect();
     }
   }, [user]);
@@ -61,7 +63,7 @@ const ChatPage = () => {
       const receiveMessageHandler = (message) => {
         // Only append if the message is from the user we are currently chatting with
         if (message.sender === otherUserId || message.receiver === otherUserId) {
-           setMessages((prev) => [...prev, message]);
+          setMessages((prev) => [...prev, message]);
         }
       };
 
@@ -73,6 +75,38 @@ const ChatPage = () => {
       };
     }
   }, [socket, otherUserId]);
+  // useeffect for chat status update
+  useEffect(() => {
+    if (socket) {
+      socket.on("typing", ({ sender }) => {
+        if (sender === otherUserId) {
+          setIsTyping(true);
+        }
+      });
+
+      socket.on("stop_typing", ({ sender }) => {
+        if (sender === otherUserId) {
+          setIsTyping(false);
+        }
+      });
+
+      socket.on("messages_seen", () => {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.sender === user._id
+              ? { ...msg, readStatus: true }
+              : msg
+          )
+        );
+      });
+
+      return () => {
+        socket.off("typing");
+        socket.off("stop_typing");
+        socket.off("messages_seen");
+      };
+    }
+  }, [socket, otherUserId, user]);
 
   // Fetch Chat History
   useEffect(() => {
@@ -88,6 +122,17 @@ const ChatPage = () => {
       fetchHistory();
     }
   }, [otherUserId, user]);
+
+  // new useffect for chat status upate bich
+
+  useEffect(() => {
+    if (socket && user && otherUserId) {
+      socket.emit("mark_seen", {
+        sender: otherUserId,
+        receiver: user._id
+      });
+    }
+  }, [socket, otherUserId, user]);
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -121,7 +166,7 @@ const ChatPage = () => {
 
   return (
     <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col card overflow-hidden border border-slate-200">
-      
+
       {/* Header */}
       <div className="bg-white px-6 py-4 border-b border-slate-200 flex items-center gap-4 z-10 shadow-sm relative">
         <Link to="/" className="text-slate-400 hover:text-slate-600 transition-colors p-2 -ml-2 rounded-full hover:bg-slate-50">
@@ -132,13 +177,17 @@ const ChatPage = () => {
             <UserIcon className="w-5 h-5" />
           </div>
           <div>
-             <h2 className="font-bold text-slate-800">
-             Chat with {userName || otherUser?.name || "😎"} 😇
+          <h2 className="font-bold text-slate-800">
+  Chat with {userName || otherUser?.name || "😎"} 😇
 </h2>
-             <span className="text-xs text-primary-600 font-medium flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-primary-500 inline-block animate-pulse"></span>
-                Online
-             </span>
+
+{isTyping && (
+  <p className="text-xs text-green-500 ml-1">Typing...</p>
+)}
+            <span className="text-xs text-primary-600 font-medium flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-primary-500 inline-block animate-pulse"></span>
+              Online
+            </span>
           </div>
         </div>
       </div>
@@ -156,17 +205,21 @@ const ChatPage = () => {
             const isMe = msg.sender === user._id;
             return (
               <div key={index} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                <div 
-                  className={`max-w-[70%] px-5 py-3 rounded-2xl shadow-sm text-sm ${
-                    isMe 
-                      ? 'bg-primary-600 text-white rounded-tr-sm border border-primary-700 font-medium' 
-                      : 'bg-white text-slate-800 rounded-tl-sm border border-slate-200'
-                  }`}
+                <div
+                  className={`max-w-[70%] px-5 py-3 rounded-2xl shadow-sm text-sm ${isMe
+                    ? 'bg-primary-600 text-white rounded-tr-sm border border-primary-700 font-medium'
+                    : 'bg-white text-slate-800 rounded-tl-sm border border-slate-200'
+                    }`}
                 >
                   {msg.content}
                 </div>
-                <span className="text-[10px] text-slate-400 mt-1 px-1 font-medium">
+                <span className="text-[10px] text-slate-400 mt-1 px-1 font-medium flex gap-1 items-center">
                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {isMe && (
+                    <span>
+                      {msg.readStatus ? "✔✔" : "✔"}
+                    </span>
+                  )}
                 </span>
               </div>
             );
@@ -182,10 +235,24 @@ const ChatPage = () => {
           className="input-field flex-1 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
           placeholder="Type your message..."
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={(e) => {
+            setNewMessage(e.target.value);
+
+            socket?.emit("typing", {
+              sender: user._id,
+              receiver: otherUserId
+            });
+
+            setTimeout(() => {
+              socket?.emit("stop_typing", {
+                sender: user._id,
+                receiver: otherUserId
+              });
+            }, 1000);
+          }}
         />
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={!newMessage.trim()}
           className="btn-primary rounded-xl px-6 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-primary-500/20"
         >
