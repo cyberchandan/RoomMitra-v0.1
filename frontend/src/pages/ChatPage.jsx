@@ -67,6 +67,8 @@ const ChatPage = () => {
       newSocket.on("connect", () => {
         console.log("Connected:", newSocket.id);
         newSocket.emit("join_chat", user._id);
+        // ✅ YE LINE ADD KARO
+  newSocket.emit("userOnline", user._id);
       });
 
       return () => newSocket.disconnect();
