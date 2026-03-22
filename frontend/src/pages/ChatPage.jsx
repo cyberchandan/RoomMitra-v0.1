@@ -5,6 +5,7 @@ import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { Send, User as UserIcon, ArrowLeft } from 'lucide-react';
 
+
 const ChatPage = () => {
   const { userId: otherUserId } = useParams();
   const { user } = useContext(AuthContext);
@@ -13,25 +14,25 @@ const ChatPage = () => {
   const [socket, setSocket] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // Initialize Socket Connection
-  // useEffect(() => {
-  //   if (user) {
-  //     // const newSocket = io('http://localhost:5000');
-  //     // const newSocket = io('https://roomserver.vercel.app/');
-  //     // setSocket(newSocket);
-  //     const newSocket = io('https://imaginative-recreation-production-d054.up.railway.app', {
-  //       transports: ['websocket']
-  //     });
-      
-  //     setSocket(newSocket); // 🔥 YE LINE ADD KAR
-      
-  //     // Join chat room
-  //     newSocket.emit('join_chat', user._id);
+  // ✅ username displaying 
+  const [otherUser, setOtherUser] = useState(null);
 
-  //     // Cleanup
-  //     return () => newSocket.disconnect();
-  //   }
-  // }, [user]);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data } = await api.get(`/users/${otherUserId}`);
+        setOtherUser(data);
+      } catch (err) {
+        console.error("Failed to fetch user");
+      }
+    };
+
+    if (otherUserId) {
+      fetchUser();
+    }
+  }, [otherUserId]);
+  //////////////////////////////////////////////////////////////
+
   useEffect(() => {
     if (user) {
       const newSocket = io('https://imaginative-recreation-production-d054.up.railway.app', {
@@ -126,7 +127,9 @@ const ChatPage = () => {
             <UserIcon className="w-5 h-5" />
           </div>
           <div>
-             <h2 className="font-bold text-slate-800">Chat with User</h2>
+             <h2 className="font-bold text-slate-800">
+             Chat with {otherUser?.name || otherUser?.username || "User"}
+</h2>
              <span className="text-xs text-primary-600 font-medium flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-primary-500 inline-block animate-pulse"></span>
                 Online
