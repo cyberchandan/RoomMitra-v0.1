@@ -4,9 +4,14 @@ import { io } from 'socket.io-client';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { Send, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 
 const ChatPage = () => {
+
+  const location = useLocation();
+  const userName = location.state?.name;
+
   const { userId: otherUserId } = useParams();
   const { user } = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
@@ -128,7 +133,7 @@ const ChatPage = () => {
           </div>
           <div>
              <h2 className="font-bold text-slate-800">
-             Chat with {otherUser?.name || otherUser?.username || "User"}
+             Chat with {userName || otherUser?.name || "User"}
 </h2>
              <span className="text-xs text-primary-600 font-medium flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-primary-500 inline-block animate-pulse"></span>

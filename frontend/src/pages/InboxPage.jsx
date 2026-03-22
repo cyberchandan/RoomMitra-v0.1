@@ -86,6 +86,7 @@ const InboxPage = () => {
             <Link 
               key={index} 
               to={`/chat/${conv.user._id}`}
+              state={{ name: conv.user.name }}
               className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                 conv.unread ? 'bg-white border-primary-200 shadow-md' : 'bg-white border-slate-200 hover:border-primary-300'
               }`}
