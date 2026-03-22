@@ -50,25 +50,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/chat', chatRoutes);
 
+
+let onlineUsers = {};
+let lastSeen = {};
 // Socket.io logic
-// io.on('connection', (socket) => {
-//   console.log('A user connected: ', socket.id);
-  
-//   socket.on('join_chat', (userId) => {
-//     socket.join(userId); // Users join a room with their own ID
-//     console.log(`User ${userId} joined their personal room`);
-//   });
-
-//   socket.on('send_message', (data) => {
-//     // data should have { receiver, sender, content }
-//     io.to(data.receiver).emit('receive_message', data);
-//   });
-
-//   socket.on('disconnect', () => {
-//     console.log('User disconnected: ', socket.id);
-//   });
-// });
-
 io.on('connection', (socket) => {
   console.log('A user connected: ', socket.id);
   
@@ -77,7 +62,17 @@ io.on('connection', (socket) => {
     socket.join(userId);
     console.log(`User ${userId} joined their personal room`);
   });
+// ✅ USER ONLINE TRACK
+socket.on("userOnline", (userId) => {
+  onlineUsers[userId] = socket.id;
 
+  console.log("User online:", userId);
+
+  io.emit("user_status", {
+    userId,
+    status: "online"
+  });
+});
   // ✅ Send message (already working)
   socket.on('send_message', (data) => {
     io.to(data.receiver).emit('receive_message', data);
@@ -118,6 +113,29 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected: ', socket.id);
+  
+    let disconnectedUser = null;
+  
+    // find userId
+    for (let userId in onlineUsers) {
+      if (onlineUsers[userId] === socket.id) {
+        disconnectedUser = userId;
+        delete onlineUsers[userId];
+        break;
+      }
+    }
+  
+    if (disconnectedUser) {
+      lastSeen[disconnectedUser] = new Date();
+  
+      console.log("User offline:", disconnectedUser);
+  
+      io.emit("user_status", {
+        userId: disconnectedUser,
+        status: "offline",
+        lastSeen: lastSeen[disconnectedUser]
+      });
+    }
   });
 });
 
