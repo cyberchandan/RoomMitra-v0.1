@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import ChatPage from './pages/ChatPage';
 import InboxPage from './pages/InboxPage';
 import { AuthContext } from './context/AuthContext';
+import NotFound from "./pages/NotFound";
 
 function App() {
   const { user, loading } = React.useContext(AuthContext);
@@ -43,6 +44,8 @@ function App() {
               path="/inbox" 
               element={user ? <InboxPage /> : <Navigate to="/login" />} 
             />
+             {/* 👇 ye LAST me hona chahiye */}
+  <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>
