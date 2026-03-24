@@ -213,7 +213,7 @@ const ChatPage = () => {
 
       {/* Header */}
       <div className="bg-white px-6 py-4 border-b border-slate-200 flex items-center gap-4 z-10 shadow-sm relative">
-        <Link to="/" className="text-slate-400 hover:text-slate-600 transition-colors p-2 -ml-2 rounded-full hover:bg-slate-50">
+        <Link to="/inbox" className="text-slate-400 hover:text-slate-600 transition-colors p-2 -ml-2 rounded-full hover:bg-slate-50">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex items-center gap-3">
